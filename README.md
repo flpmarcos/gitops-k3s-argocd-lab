@@ -74,6 +74,15 @@ Sem `make`? Chame direto: `./scripts/00-bootstrap.sh`, `./scripts/10-build-impor
 
 ---
 
+## Documentação
+
+| Doc | Conteúdo |
+|---|---|
+| [docs/AMBIENTE-DE-TESTE.md](docs/AMBIENTE-DE-TESTE.md) | O lab local (k3d + ArgoCD): topologia, comandos, **evidências** dos testes (upgrade, rollback, selfHeal, Windows `Pending`) e problemas resolvidos |
+| [docs/PRODUCAO.md](docs/PRODUCAO.md) | Como montar **produção completa** com nodes Linux **+ Windows**: provisionar VMs/node pools (AKS/EKS/GKE/kubeadm), registry, secrets, GitOps HA, custos, segurança, CI/CD |
+
+---
+
 ## Dois caminhos de execução
 
 | Caminho | Engine | Onde roda | Quando usar |
