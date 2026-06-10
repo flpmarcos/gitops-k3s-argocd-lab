@@ -74,13 +74,92 @@ Sem `make`? Chame direto: `./scripts/00-bootstrap.sh`, `./scripts/10-build-impor
 
 ---
 
-## Pré-requisitos
+## Dois caminhos de execução
+
+| Caminho | Engine | Onde roda | Quando usar |
+|---|---|---|---|
+| **A (recomendado)** | **k3d** (k3s em Docker) | **Windows** ou Linux, só precisa de Docker | mais rápido, sem WSL/systemd |
+| B | **K3s** | Linux / WSL | quer K3s "real" no host |
+
+Os dois usam **exatamente os mesmos manifests e o mesmo fluxo GitOps**. k3d é
+literalmente k3s dentro de um container Docker — Traefik, NodePort, tudo igual.
+
+> ✅ **Caminho A foi executado e validado de ponta a ponta**: ArgoCD sincronizando
+> do GitHub, ConfigMap + Secret aplicados, NodePort respondendo, upgrade v1→v2,
+> rollback v2→v1, e o app Windows em `Pending` (FailedScheduling) como esperado.
+
+---
+
+## Caminho A — k3d (roda no Windows, sem WSL) ⭐
+
+### Pré-requisitos
+- **Docker Desktop** rodando em modo **Linux containers** (padrão).
+- `kubectl` e `git` no PATH. `k3d` é baixado automaticamente se faltar.
+
+### Passo a passo (git-bash / WSL / Linux)
+
+```bash
+git clone https://github.com/flpmarcos/gitops-k3s-argocd-lab.git
+cd gitops-k3s-argocd-lab
+
+# 1) cluster k3d + ArgoCD (baixa o k3d se necessário)
+./scripts/00b-bootstrap-k3d.sh
+export KUBECONFIG=/tmp/k3d-gitops-lab.yaml   # impresso pelo script
+
+# 2) build + import da imagem Linux (k3d image import, sem registry)
+ENGINE=k3d ./scripts/10-build-import.sh v1
+
+# 3) registrar as Applications (lê do GitHub público)
+./scripts/20-deploy-argocd.sh github
+
+# 4) status
+./scripts/50-status.sh
+curl http://localhost:30080/version      # {"version":"v1",...}
+```
+
+> O ArgoCD pode levar até ~3min (polling) pra sincronizar. Pra forçar agora:
+> ```bash
+> kubectl -n argocd annotate application app-modern-linux \
+>   argocd.argoproj.io/refresh=hard --overwrite
+> ```
+
+### Bootstrap manual equivalente (sem script)
+
+```bash
+k3d cluster create gitops-lab -p "30080:30080@server:0" -p "30081:30081@server:0"
+k3d kubeconfig get gitops-lab > /tmp/k3d-gitops-lab.yaml
+export KUBECONFIG=/tmp/k3d-gitops-lab.yaml
+
+docker build -t app-modern-linux:v1 apps/modern-linux
+k3d image import app-modern-linux:v1 -c gitops-lab
+
+kubectl create namespace argocd
+# server-side: o CRD applicationsets é grande demais pro client-side apply
+kubectl apply --server-side --force-conflicts -n argocd \
+  -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl wait --for=condition=available --timeout=300s deployment --all -n argocd
+
+kubectl apply -f argocd/app-modern-linux.yaml
+kubectl apply -f argocd/app-legacy-windows.yaml
+```
+
+### Limpeza (k3d)
+
+```bash
+./scripts/99b-cleanup-k3d.sh      # deleta o cluster inteiro
+```
+
+---
+
+## Caminho B — K3s (Linux / WSL)
+
+### Pré-requisitos
 
 - **WSL2** (Ubuntu) no Windows, ou uma distro Linux.
 - **Docker** rodando dentro do WSL/Linux (Docker Engine ou Docker Desktop com WSL integration).
 - Acesso `sudo`.
 
-> Tudo abaixo é para **Linux / WSL**. Sem ferramentas pagas.
+> As seções 1–8 abaixo são o caminho **K3s**. Sem ferramentas pagas.
 
 ---
 
@@ -434,6 +513,18 @@ kubectl delete namespace argocd --ignore-not-found
 # Desinstalar K3s por completo:
 /usr/local/bin/k3s-uninstall.sh
 ```
+
+---
+
+## Troubleshooting (perrengues reais já resolvidos)
+
+| Sintoma | Causa | Fix (já aplicado no repo) |
+|---|---|---|
+| `CreateContainerConfigError` + `image has non-numeric user (app)` | `runAsNonRoot: true` com a imagem .NET 8 que usa user **nome** `app`, não UID | `runAsUser: 1654` no `securityContext` |
+| `CustomResourceDefinition "applicationsets.argoproj.io" is invalid: metadata.annotations: Too long` | install do ArgoCD via `kubectl apply` client-side estoura o limite de 256KB de annotation | `kubectl apply --server-side --force-conflicts` |
+| App moderno fica `ImagePullBackOff` | imagem não foi importada pro cluster | `ENGINE=k3d ./scripts/10-build-import.sh v1` (ou `k3s ctr images import`) |
+| ArgoCD não pega o commit na hora | reconciliação é polling (~3min) | `kubectl -n argocd annotate application <app> argocd.argoproj.io/refresh=hard --overwrite` |
+| App Windows `Pending` | **esperado** — sem node `kubernetes.io/os=windows` | nada a fazer; é o objetivo do cenário 2 |
 
 ---
 
