@@ -22,7 +22,7 @@ spec:
         - name: app
           # Local image. imagePullPolicy: IfNotPresent so K3s uses the image
           # imported via "k3s ctr images import" instead of hitting a registry.
-          image: app-modern-linux:v1
+          image: app-modern-linux:v2
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -30,7 +30,7 @@ spec:
           env:
             # Mirror the deployed image tag so /version can report it.
             - name: APP_VERSION
-              value: "v1"
+              value: "v2"
             # Secret -> env var
             - name: APP_SECRET
               valueFrom:
