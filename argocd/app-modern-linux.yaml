@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-modern-linux
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    # >>> CHANGE THIS to your fork/clone URL <<<
+    repoURL: https://github.com/flpmarcos/gitops-k3s-argocd-lab.git
+    targetRevision: main
+    path: k8s/modern-linux
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gitops-lab
+  syncPolicy:
+    automated:
+      prune: true       # delete resources removed from git
+      selfHeal: true    # revert manual drift back to git state
+    syncOptions:
+      - CreateNamespace=true

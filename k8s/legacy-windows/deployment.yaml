@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-legacy-windows
+  namespace: gitops-lab
+  labels:
+    app: app-legacy-windows
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-legacy-windows
+  template:
+    metadata:
+      labels:
+        app: app-legacy-windows
+    spec:
+      # >>> THE KEY LINE <<<
+      # Forces this Pod onto a Windows node. K3s local has no Windows node,
+      # so the Pod stays Pending forever (FailedScheduling). This is EXPECTED
+      # and documented in the README.
+      nodeSelector:
+        kubernetes.io/os: windows
+      # Windows pods also need a matching toleration is NOT required, but the
+      # scheduler simply finds no node satisfying the os=windows selector.
+      containers:
+        - name: app
+          image: app-legacy-windows:423
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          # IIS serves the page on 80; probe the root document.
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 15

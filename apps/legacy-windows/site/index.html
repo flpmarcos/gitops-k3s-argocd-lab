@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>App Legacy Windows</title>
+  <style>
+    body { font-family: Segoe UI, Arial, sans-serif; background:#0b1020; color:#e6e9f5;
+           display:flex; min-height:100vh; align-items:center; justify-content:center; margin:0; }
+    .card { background:#161c33; border:1px solid #2a3358; border-radius:12px;
+            padding:2.5rem 3rem; max-width:560px; box-shadow:0 10px 40px rgba(0,0,0,.4); }
+    h1 { margin:0 0 .5rem; font-size:1.6rem; }
+    .tag { display:inline-block; background:#1d4ed8; color:#fff; border-radius:999px;
+           padding:.2rem .8rem; font-size:.8rem; letter-spacing:.05em; }
+    code { background:#0b1020; padding:.15rem .4rem; border-radius:6px; }
+    .meta { margin-top:1.2rem; font-size:.9rem; color:#9aa3c7; line-height:1.6; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <span class="tag">LEGACY · WINDOWS CONTAINER</span>
+    <h1>App Legacy Windows (IIS)</h1>
+    <p>Aplicacao legada simulada rodando em <strong>Windows Server Core + IIS</strong>.</p>
+    <div class="meta">
+      <div>Image: <code>app-legacy-windows</code></div>
+      <div>Base: <code>mcr.microsoft.com/windows/servercore/iis</code></div>
+      <div>nodeSelector: <code>kubernetes.io/os: windows</code></div>
+      <div>Status no K3s local: <code>Pending</code> (sem node Windows — esperado).</div>
+    </div>
+  </div>
+</body>
+</html>

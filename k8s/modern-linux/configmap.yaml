@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-modern-linux-config
+  namespace: gitops-lab
+  labels:
+    app: app-modern-linux
+data:
+  # Consumed by ASP.NET config (app.Configuration["Greeting"]).
+  # The "__" maps to ":" in .NET config keys; flat key also works here.
+  Greeting: "Hello from modern Linux app (via ConfigMap)"
+  Logging__LogLevel__Default: "Information"

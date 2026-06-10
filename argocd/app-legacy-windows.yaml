@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-legacy-windows
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    # >>> CHANGE THIS to your fork/clone URL <<<
+    repoURL: https://github.com/flpmarcos/gitops-k3s-argocd-lab.git
+    targetRevision: main
+    path: k8s/legacy-windows
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gitops-lab
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  # NOTE: ArgoCD will sync these manifests successfully (Synced), but the Pod
+  # will report Health = Progressing/Missing because it stays Pending — there is
+  # no Windows node in K3s. Expected. See README.

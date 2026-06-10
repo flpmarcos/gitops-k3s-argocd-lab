@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-legacy-windows
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: http://gitea.git.svc.cluster.local:3000/lab/csharp-new-and-old-deploy.git
+    targetRevision: main
+    path: k8s/legacy-windows
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gitops-lab
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  # Esperado: Synced, mas Health Progressing/Missing — Pod fica Pending (sem node Windows).

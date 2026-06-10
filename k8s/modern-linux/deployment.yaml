@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-modern-linux
+  namespace: gitops-lab
+  labels:
+    app: app-modern-linux
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: app-modern-linux
+  template:
+    metadata:
+      labels:
+        app: app-modern-linux
+    spec:
+      # Force scheduling onto Linux nodes (the only kind K3s has here).
+      nodeSelector:
+        kubernetes.io/os: linux
+      containers:
+        - name: app
+          # Local image. imagePullPolicy: IfNotPresent so K3s uses the image
+          # imported via "k3s ctr images import" instead of hitting a registry.
+          image: app-modern-linux:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            # Mirror the deployed image tag so /version can report it.
+            - name: APP_VERSION
+              value: "v1"
+            # Secret -> env var
+            - name: APP_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-modern-linux-secret
+                  key: APP_SECRET
+          # ConfigMap -> env vars (all keys)
+          envFrom:
+            - configMapRef:
+                name: app-modern-linux-config
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "250m"
+              memory: "192Mi"
+          # Readiness: gate traffic until the app answers.
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          # Liveness: restart the container if it wedges.
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]

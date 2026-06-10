@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-modern-linux
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    # Git server LOCAL (Gitea no cluster). DNS interno alcançável pelos pods do ArgoCD.
+    # Troque "lab" pelo usuário admin que você criar no Gitea.
+    repoURL: http://gitea.git.svc.cluster.local:3000/lab/csharp-new-and-old-deploy.git
+    targetRevision: main
+    path: k8s/modern-linux
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gitops-lab
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
