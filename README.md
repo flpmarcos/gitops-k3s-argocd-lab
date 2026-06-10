@@ -37,6 +37,33 @@ e o comportamento de scheduling quando **não há node Windows**.
 
 ---
 
+## Automação (scripts + Makefile)
+
+Tudo que o passo a passo faz manualmente está automatizado em `scripts/`
+(rode em **Linux/WSL**). Atalhos via `make`:
+
+```bash
+make bootstrap          # instala K3s + ArgoCD
+make build TAG=v1       # build + import da imagem Linux no K3s
+make deploy             # registra as ArgoCD Applications (GitHub)
+make status             # visão geral (apps, pods, /version, Windows Pending)
+make upgrade TAG=v2     # build v2 + bump manifest + commit + push (ArgoCD sincroniza)
+make rollback           # git revert + push (volta versão)
+make clean              # remove apps + namespaces
+make clean-all          # + desinstala K3s
+
+# Git server local opcional (sem GitHub):
+make gitea              # sobe Gitea no cluster + cria admin
+make deploy-gitea       # Applications apontando pro Gitea interno
+```
+
+Sem `make`? Chame direto: `./scripts/00-bootstrap.sh`, `./scripts/10-build-import.sh v1`, etc.
+
+> **Validado localmente:** imagem Linux builda e responde `/health`, `/version`, `/`
+> (ConfigMap/Secret aplicados). Todos os manifests passam em `kubectl apply --dry-run=client`.
+
+---
+
 ## Endpoints do app moderno
 
 | Rota | Retorno |

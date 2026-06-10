@@ -1,0 +1,7 @@
+# Shell scripts and YAML must use LF, even checked out on Windows,
+# otherwise they break under Linux/WSL (e.g. "bad interpreter: /usr/bin/env bash\r").
+*.sh   text eol=lf
+*.yaml text eol=lf
+*.yml  text eol=lf
+Makefile text eol=lf
+Dockerfile text eol=lf
