@@ -69,6 +69,9 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             runAsNonRoot: true
+            # UID do usuário "app" nas imagens .NET 8 (mcr aspnet:8.0). Precisa ser
+            # numérico, senão o kubelet recusa: "image has non-numeric user (app)".
+            runAsUser: 1654
             readOnlyRootFilesystem: true
             capabilities:
               drop: ["ALL"]
